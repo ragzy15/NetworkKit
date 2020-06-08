@@ -64,11 +64,7 @@ extension NKImageSessionDelegate {
             }
             #endif
             
-            if flag {
-                image = nil
-            } else {
-                image = placeholder
-            }
+            image = placeholder
             
             completion?(nil)
             return nil
@@ -98,9 +94,6 @@ extension NKImageSessionDelegate {
                 completion?(newImage)
                 
             case .failure:
-                if flag {
-                    self?.image = nil
-                }
                 completion?(nil)
             }
         }

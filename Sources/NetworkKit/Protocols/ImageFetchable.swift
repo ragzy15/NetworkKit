@@ -72,11 +72,7 @@ extension ImageFetchable {
             }
             #endif
             
-            if flag {
-                image = nil
-            } else if let placeholder = placeholder {
-                image = placeholder
-            }
+            image = placeholder
             
             completion?(nil)
             return
@@ -106,9 +102,6 @@ extension ImageFetchable {
                 completion?(newImage)
                 
             case .failure:
-                if flag {
-                    self?.image = nil
-                }
                 completion?(nil)
             }
         }
