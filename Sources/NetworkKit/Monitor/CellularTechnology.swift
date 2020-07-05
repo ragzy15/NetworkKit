@@ -7,9 +7,19 @@
 
 #if os(iOS) && !targetEnvironment(macCatalyst)
 import CoreTelephony
-#endif
 
-public enum CellularTechnology: String {
+public struct CellularInfo: Hashable, CustomStringConvertible {
+    
+    public let carriers: [CTCarrier]
+    public let dataProvider: CTCarrier?
+    public let dataTechnology: CellularTechnology
+    
+    public var description: String {
+        "Carriers: \(carriers)\nTechnology: \(dataTechnology)"
+    }
+}
+
+public enum CellularTechnology: String, CustomStringConvertible {
     
     /// The Long-Term Evolution (LTE) cellular technology.
     case lte = "LTE"
@@ -24,12 +34,15 @@ public enum CellularTechnology: String {
     case other = "Other"
     
     /// No cellular connection available.
-    case none
+    case none = "none"
+    
+    public var description: String {
+        rawValue
+    }
 }
 
 // MARK: INTERNET CONNECTION INTERFACE
-#if os(iOS) && !targetEnvironment(macCatalyst) && canImport(CoreTelephony)
-private enum __CellularTechnology: CustomStringConvertible {
+enum __CellularTechnology: CustomStringConvertible {
     case cdma
     case edge
     case gprs
@@ -75,32 +88,3 @@ private enum __CellularTechnology: CustomStringConvertible {
     }
 }
 #endif
-
-extension NetworkMonitorType {
-    
-    /// Tells what cellular network type is available.
-    ///
-    /// Will return technology or `.none` incase no cellular technology is available or `.other` if cellular technology has not been handled.
-    static var cellularConnectionType: CellularTechnology {
-        
-        #if os(iOS) && !targetEnvironment(macCatalyst) && canImport(CoreTelephony)
-        
-        let networkInfo = CTTelephonyNetworkInfo()
-        
-        guard let networkString = networkInfo.currentRadioAccessTechnology else {
-            return .none
-        }
-        
-        guard let tecnology = __CellularTechnology(rawValue: networkString) else {
-            return .other
-        }
-        
-        return tecnology.version
-        
-        #elseif os(watchOS)
-        return .lte
-        #else
-        return .none
-        #endif
-    }
-}

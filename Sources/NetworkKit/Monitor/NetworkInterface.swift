@@ -12,20 +12,24 @@ public enum NetworkInterface: Hashable, CustomStringConvertible {
     case wifi
     
     /// Network is available through **Cellular** connection.
-    case cellular(CellularTechnology)
+    case cellular(CellularInfo)
     
-    /// Network is available through other connection such as wired ethernet or loopback.
+    /// A virtual or otherwise unknown interface type
     case other
-    
-    /// No network interface available.
-    case none
+
+    /// A Wired Ethernet link
+    case wiredEthernet
+
+    /// The Loopback Interface
+    case loopback
     
     public var description: String {
         switch self {
         case .wifi: return "Wi-Fi"
-        case .cellular(let technology): return "Cellular: \(technology.rawValue)"
-        case .other: return "Ethernet or Loopback"
-        case .none: return "None"
+        case .cellular(let technology): return "Cellular: \(technology.description)"
+        case .other: return "Virtual or unknown"
+        case .wiredEthernet: return "Wired Ethernet"
+        case .loopback: return "Loopback"
         }
     }
 }

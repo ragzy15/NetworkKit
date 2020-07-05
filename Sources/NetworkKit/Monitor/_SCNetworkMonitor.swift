@@ -10,6 +10,10 @@
 import Foundation
 import PublisherKit
 
+#if os(iOS) && !targetEnvironment(macCatalyst)
+import CoreTelephony
+#endif
+
 #if !(os(watchOS))
 import SystemConfiguration
 
@@ -19,32 +23,42 @@ import SystemConfiguration
 /// Reachability can be used to determine background information about why a network operation failed, or to retry
 /// network requests when a connection is established. It should not be used to prevent a user from initiating a network
 /// request, as it's possible that an initial request may be required to establish reachability.
-final class _SCNetworkMonitor: NetworkMonitorType {
+final class _SCNetworkMonitor: _NetworkMonitorType {
     
-    public private(set) var currentPath: NetworkPath
+    #if os(iOS) && !targetEnvironment(macCatalyst)
+    let telephoneNetworkInfo = CTTelephonyNetworkInfo()
     
-    private var _isEnabled: Bool = false
+    var _isMonitoringCellularInfo: Bool = false
     
-    var isEnabled: Bool {
-        _isEnabled
+    var isMonitoringCellularInfo: Bool {
+        _isMonitoringCellularInfo
+    }
+    #endif
+    
+    private(set) var currentPath: NetworkPath
+    
+    var _isMonitoringNetworkPath: Bool = false
+    
+    var isMonitoringNetworkPath: Bool {
+        _isMonitoringNetworkPath
     }
     
     private let queue = DispatchQueue(label: "com.networkkit.network-monitor", qos: .background)
     
-    func startMonitoring(handler: NetworkPathHandler?) {
-        guard !isEnabled else {
+    func startMonitoringNetworkPath(handler: NetworkPathHandler?) {
+        guard !isMonitoringNetworkPath else {
             return
         }
         
-        _isEnabled = startListening(listener: handler)
+        _isMonitoringNetworkPath = startListening(listener: handler)
     }
     
-    func stopMonitoring() {
-        guard _isEnabled else {
+    func stopMonitoringNetworkPath() {
+        guard _isMonitoringNetworkPath else {
             return
         }
         
-        _isEnabled = false
+        _isMonitoringNetworkPath = false
         
         stopListening()
     }
@@ -53,14 +67,15 @@ final class _SCNetworkMonitor: NetworkMonitorType {
     enum NetworkReachabilityStatus {
         
         /// It is unknown whether the network is reachable.
-        case unknown
+        case unknown(NetworkInterface)
+        
         /// The network is not reachable.
         case notReachable(NetworkInterface)
         
         /// The network is reachable on the associated `NetworkInterface`.
         case reachable(NetworkInterface)
 
-        init(_ flags: SCNetworkReachabilityFlags, cellular: CellularTechnology) {
+        init(_ flags: SCNetworkReachabilityFlags, cellular: CellularInfo) {
             guard flags.isActuallyReachable else {
                 
                 if flags.isCellular {
@@ -91,7 +106,7 @@ final class _SCNetworkMonitor: NetworkMonitorType {
     /// - Note: Using this property to decide whether to make a high or low bandwidth request is not recommended.
     ///         Instead, set the `allowsCellularAccess` on any `URLRequest`s being issued.
     ///
-    var isReachableOnCellular: Bool { status == .reachable(.cellular(_SCNetworkMonitor.cellularConnectionType)) }
+    var isReachableOnCellular: Bool { status == .reachable(.cellular(cellularInfo)) }
 
     /// Whether the network is currently reachable over Ethernet or WiFi interface.
     var isReachableOnEthernetOrWiFi: Bool { status == .reachable(.wifi) }
@@ -105,8 +120,7 @@ final class _SCNetworkMonitor: NetworkMonitorType {
 
     /// The current network reachability status.
     var status: NetworkReachabilityStatus {
-        let cellularConnection = _SCNetworkMonitor.cellularConnectionType
-        return flags.map { NetworkReachabilityStatus($0, cellular: cellularConnection) } ?? .unknown
+        return flags.map { NetworkReachabilityStatus($0, cellular: cellularInfo) } ?? .unknown(.other)
     }
 
     /// Mutable state storage.
@@ -145,7 +159,7 @@ final class _SCNetworkMonitor: NetworkMonitorType {
 
     private init(reachability: SCNetworkReachability) {
         self.reachability = reachability
-        currentPath = NetworkPath(isExpensive: false, interface: .none, status: .unsatisfied)
+        currentPath = NetworkPath(isExpensive: false, interfaces: [], status: .unsatisfied)
         
         let isExpensive: Bool
         
@@ -160,10 +174,10 @@ final class _SCNetworkMonitor: NetworkMonitorType {
         switch status {
         case .reachable(let _interface): interface = _interface
         case .notReachable(let _interface): interface = _interface
-        case .unknown: interface = .none
+        case .unknown: interface = .other
         }
         
-        currentPath = NetworkPath(isExpensive: isExpensive, interface: interface, status: flags?.pathStatus ?? .unsatisfied)
+        currentPath = NetworkPath(isExpensive: isExpensive, interfaces: [interface], status: flags?.pathStatus ?? .unsatisfied)
     }
 
     deinit {
@@ -233,7 +247,7 @@ final class _SCNetworkMonitor: NetworkMonitorType {
     ///
     /// - Parameter flags: `SCNetworkReachabilityFlags` to use to calculate the status.
     func notifyListener(_ flags: SCNetworkReachabilityFlags) {
-        let newStatus = NetworkReachabilityStatus(flags, cellular: _SCNetworkMonitor.cellularConnectionType)
+        let newStatus = NetworkReachabilityStatus(flags, cellular: cellularInfo)
 
         $mutableState.write { state in
             guard state.previousStatus != newStatus else { return }
@@ -247,7 +261,7 @@ final class _SCNetworkMonitor: NetworkMonitorType {
             switch newStatus {
             case .reachable(let interface): currentInterface = interface
             case .notReachable(let interface): currentInterface = interface
-            case .unknown: currentInterface = .none
+            case .unknown: currentInterface = .other
             }
             
             let isExpensive: Bool
@@ -258,7 +272,7 @@ final class _SCNetworkMonitor: NetworkMonitorType {
                 isExpensive = false
             }
             
-            let details = NetworkPath(isExpensive: isExpensive, interface: currentInterface, status: flags.pathStatus)
+            let details = NetworkPath(isExpensive: isExpensive, interfaces: [currentInterface], status: flags.pathStatus)
             
             state.listenerQueue?.async {
                 listener?(details)

@@ -22,8 +22,8 @@ public struct NetworkPath: Equatable {
     /// interfaces may appear as expensive in the future.
     public let isExpensive: Bool
     
-    /// Preferred network interface.
-    public let interface: NetworkInterface
+    /// A list of all interfaces available to the path, in order of preference.
+    public let interfaces: [NetworkInterface]
     
     /// An NetworkPath status indicates if there is a usable route available upon which to send and receive data.
     public enum Status: Hashable {
@@ -52,10 +52,10 @@ public struct NetworkPath: Equatable {
         status == .satisfied
     }
     
-    init(isConstrained: Bool = false, isExpensive: Bool, interface: NetworkInterface, status: Status) {
+    init(isConstrained: Bool = false, isExpensive: Bool, interfaces: [NetworkInterface], status: Status) {
         self._isConstrained = isConstrained
         self.isExpensive = isExpensive
-        self.interface = interface
+        self.interfaces = interfaces
         self.status = status
     }
 }

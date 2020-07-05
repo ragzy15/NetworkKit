@@ -7,38 +7,54 @@
 
 import Network
 
+#if os(iOS) && !targetEnvironment(macCatalyst)
+import CoreTelephony
+#endif
+
 @available(macOS 10.14, iOS 12.0, watchOS 5.0, tvOS 12.0, *)
-final class _NWNetworkMonitor: NetworkMonitorType {
+final class _NWNetworkMonitor: _NetworkMonitorType {
+    
+    #if os(iOS) && !targetEnvironment(macCatalyst)
+    let telephoneNetworkInfo: CTTelephonyNetworkInfo
+    
+    var _isMonitoringCellularInfo: Bool = false
+    
+    var isMonitoringCellularInfo: Bool {
+        _isMonitoringCellularInfo
+    }
+    #endif
     
     static let `default` = _NWNetworkMonitor()
     
     private let monitor: NWPathMonitor
     
-    private let queue = DispatchQueue(label: "com.networkkit.network-monitor", qos: .background)
+    let queue = DispatchQueue(label: "com.networkkit.network-monitor", qos: .background)
     
-    public private(set) var currentPath: NetworkPath
+    private(set) var currentPath: NetworkPath
     
-    private var _isEnabled: Bool = false
+    var _isMonitoringNetworkPath: Bool = false
     
-    var isEnabled: Bool {
-        _isEnabled
+    var isMonitoringNetworkPath: Bool {
+        _isMonitoringNetworkPath
     }
     
     init() {
+        let telephoneNetwork = CTTelephonyNetworkInfo()
+        telephoneNetworkInfo = telephoneNetwork
         monitor = NWPathMonitor()
-        currentPath = monitor.currentPath.networkPath
+        currentPath = monitor.currentPath.networkPath(for: _NWNetworkMonitor.cellularInfo(using: telephoneNetwork))
     }
     
     deinit {
         monitor.cancel()
     }
     
-    func startMonitoring(handler: NetworkPathHandler?) {
-        guard !_isEnabled else {
+    func startMonitoringNetworkPath(handler: NetworkPathHandler?) {
+        guard !_isMonitoringNetworkPath else {
             return
         }
         
-        _isEnabled = true
+        _isMonitoringNetworkPath = true
         updates(handler)
         monitor.start(queue: queue)
     }
@@ -54,19 +70,19 @@ final class _NWNetworkMonitor: NetworkMonitorType {
                 return
             }
             
-            let networkPath = path.networkPath
+            let networkPath = path.networkPath(for: self.cellularInfo)
             self.currentPath = networkPath
             
             handler(networkPath)
         }
     }
     
-    func stopMonitoring() {
-        guard _isEnabled else {
+    func stopMonitoringNetworkPath() {
+        guard _isMonitoringNetworkPath else {
             return
         }
         
-        _isEnabled = false
+        _isMonitoringNetworkPath = false
         monitor.cancel()
         monitor.pathUpdateHandler = nil
     }
@@ -75,12 +91,14 @@ final class _NWNetworkMonitor: NetworkMonitorType {
 @available(macOS 10.14, iOS 12.0, watchOS 5.0, tvOS 12.0, *)
 extension NWInterface.InterfaceType {
     
-    func _networkInterface(cellular: CellularTechnology) -> NetworkInterface {
+    func _networkInterface(cellular: CellularInfo) -> NetworkInterface {
         switch self {
-        case .wifi                              : return .wifi
-        case .cellular                          : return .cellular(cellular)
-        case .other, .wiredEthernet, .loopback  : return .other
-        @unknown default                        : return .other
+            case .wifi                              : return .wifi
+            case .cellular                          : return .cellular(cellular)
+            case .other                             : return .other
+            case .wiredEthernet                     : return .wiredEthernet
+            case .loopback                          : return .loopback
+            @unknown default                        : return .other
         }
     }
 }
@@ -101,16 +119,16 @@ extension NWPath.Status {
 @available(macOS 10.14, iOS 12.0, watchOS 5.0, tvOS 12.0, *)
 extension NWPath {
     
-    var networkPath: NetworkPath {
+    func networkPath(for cellularInfo: CellularInfo) -> NetworkPath {
         
         let isExpensive = self.isExpensive
         let status = self.status._status
-        let interface = availableInterfaces.first?.type._networkInterface(cellular: _NWNetworkMonitor.cellularConnectionType) ?? .none
+        let interfaces = availableInterfaces.map { $0.type._networkInterface(cellular: cellularInfo) }
         
         if #available(OSX 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *) {
-            return NetworkPath(isConstrained: isConstrained, isExpensive: isExpensive, interface: interface, status: status)
+            return NetworkPath(isConstrained: isConstrained, isExpensive: isExpensive, interfaces: interfaces, status: status)
         } else {
-            return NetworkPath(isExpensive: isExpensive, interface: interface, status: status)
+            return NetworkPath(isExpensive: isExpensive, interfaces: interfaces, status: status)
         }
     }
 }
