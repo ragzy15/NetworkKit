@@ -39,10 +39,15 @@ final class _NWNetworkMonitor: _NetworkMonitorType {
     }
     
     init() {
+        let monitor = NWPathMonitor()
+        self.monitor = monitor
+        #if os(iOS) && !targetEnvironment(macCatalyst)
         let telephoneNetwork = CTTelephonyNetworkInfo()
-        telephoneNetworkInfo = telephoneNetwork
-        monitor = NWPathMonitor()
+        self.telephoneNetworkInfo = telephoneNetwork
         currentPath = monitor.currentPath.networkPath(for: _NWNetworkMonitor.cellularInfo(using: telephoneNetwork))
+        #else
+        currentPath = monitor.currentPath.networkPath()
+        #endif
     }
     
     deinit {
@@ -70,7 +75,12 @@ final class _NWNetworkMonitor: _NetworkMonitorType {
                 return
             }
             
+            #if os(iOS) && !targetEnvironment(macCatalyst)
             let networkPath = path.networkPath(for: self.cellularInfo)
+            #else
+            let networkPath = path.networkPath()
+            #endif
+            
             self.currentPath = networkPath
             
             handler(networkPath)
@@ -91,6 +101,7 @@ final class _NWNetworkMonitor: _NetworkMonitorType {
 @available(macOS 10.14, iOS 12.0, watchOS 5.0, tvOS 12.0, *)
 extension NWInterface.InterfaceType {
     
+    #if (os(iOS) && !targetEnvironment(macCatalyst))
     func _networkInterface(cellular: CellularInfo) -> NetworkInterface {
         switch self {
             case .wifi                              : return .wifi
@@ -101,6 +112,19 @@ extension NWInterface.InterfaceType {
             @unknown default                        : return .other
         }
     }
+    
+    #else
+    func _networkInterface() -> NetworkInterface {
+        switch self {
+        case .wifi                              : return .wifi
+        case .cellular                          : return .cellular
+        case .other                             : return .other
+        case .wiredEthernet                     : return .wiredEthernet
+        case .loopback                          : return .loopback
+        @unknown default                        : return .other
+        }
+    }
+    #endif
 }
 
 @available(macOS 10.14, iOS 12.0, watchOS 5.0, tvOS 12.0, *)
@@ -119,6 +143,7 @@ extension NWPath.Status {
 @available(macOS 10.14, iOS 12.0, watchOS 5.0, tvOS 12.0, *)
 extension NWPath {
     
+    #if os(iOS) && !targetEnvironment(macCatalyst)
     func networkPath(for cellularInfo: CellularInfo) -> NetworkPath {
         
         let isExpensive = self.isExpensive
@@ -131,4 +156,19 @@ extension NWPath {
             return NetworkPath(isExpensive: isExpensive, interfaces: interfaces, status: status)
         }
     }
+    
+    #else
+    func networkPath() -> NetworkPath {
+        
+        let isExpensive = self.isExpensive
+        let status = self.status._status
+        let interfaces = availableInterfaces.map { $0.type._networkInterface() }
+        
+        if #available(OSX 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *) {
+            return NetworkPath(isConstrained: isConstrained, isExpensive: isExpensive, interfaces: interfaces, status: status)
+        } else {
+            return NetworkPath(isExpensive: isExpensive, interfaces: interfaces, status: status)
+        }
+    }
+    #endif
 }

@@ -68,7 +68,9 @@ extension ImageFetchable {
             if #available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *) {
                 os_log("❗️%{public}@", log: .imageSession, type: .error, NSError.badURL(for: urlString))
             } else {
-                NSLog("❗️%@", NSError.badURL(for: urlString))
+                if NKImageSession.shared.isLoggingEnabled {
+                    NSLog("❗️%@", NSError.badURL(for: urlString))
+                }
             }
             #endif
             

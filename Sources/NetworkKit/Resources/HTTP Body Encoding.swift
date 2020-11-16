@@ -15,7 +15,7 @@ public enum HTTPBodyEncodingType {
     case formURLEncoded
     case json
     
-    var headers: HTTPHeaderParameters {
+    public var headers: HTTPHeaderParameters {
         switch self {
         case .formURLEncoded:
             return ["Content-Type": "application/x-www-form-urlencoded"]
@@ -24,7 +24,7 @@ public enum HTTPBodyEncodingType {
         }
     }
     
-    func encode(body: [String: Any]) -> Data? {
+    public func encode(body: [String: Any]) -> Data? {
         switch self {
         case .formURLEncoded:
             if let bodyData = query(body).data(using: .utf8, allowLossyConversion: false) {

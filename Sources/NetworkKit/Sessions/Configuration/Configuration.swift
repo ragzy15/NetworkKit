@@ -51,6 +51,10 @@ open class NKConfiguration {
         configuration.timeoutIntervalForRequest = TimeInterval(integerLiteral: 20)
         configuration.timeoutIntervalForResource = TimeInterval(integerLiteral: 40)
         
+        if #available(iOS 11.0, *) {
+            configuration.waitsForConnectivity = true
+        }
+        
         return configuration
     }()
     
@@ -90,6 +94,13 @@ open class NKConfiguration {
     public init(urlCache cache: URLCache? = nil, configuration config: URLSessionConfiguration) {
         urlCache = cache
         session = URLSession(configuration: config)
+        emptyCacheOnAppTerminate = true
+        setNotificationObservers()
+    }
+    
+    public init(urlCache cache: URLCache? = nil, configuration config: URLSessionConfiguration, deleagte: URLSessionDelegate, delegateQueue: OperationQueue?) {
+        urlCache = cache
+        session = URLSession(configuration: config, delegate: deleagte, delegateQueue: delegateQueue)
         emptyCacheOnAppTerminate = true
         setNotificationObservers()
     }
@@ -307,8 +318,8 @@ extension NKConfiguration {
     
     /// Updates the current environment.
     /// - Parameter newEnvironment: New Server Environment to be set.
-    public static func updateEnvironment(_ newEnvironment: Environment) {
-        Environment.current = newEnvironment
+    public static func updateEnvironment(_ newEnvironment: NKEnvironment) {
+        NKEnvironment.current = newEnvironment
         
         #if DEBUG
         UserDefaults.standard.set(newEnvironment.value, forKey: "api_environment")
@@ -316,7 +327,7 @@ extension NKConfiguration {
     }
     
     /// Returns the current environment.
-    public static var currentEnvironment: Environment? {
-        return Environment.current
+    public static var currentEnvironment: NKEnvironment? {
+        return NKEnvironment.current
     }
 }

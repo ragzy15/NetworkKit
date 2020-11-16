@@ -18,7 +18,7 @@ let package = Package(
             targets: ["NetworkKit"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/ragzy15/PublisherKit", from: "4.0.2")
+        .package(url: "https://github.com/ragzy15/PublisherKit", .branch("networker"))
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.

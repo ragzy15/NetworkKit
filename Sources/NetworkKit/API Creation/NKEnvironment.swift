@@ -1,5 +1,5 @@
 //
-//  Environment.swift
+//  NKEnvironment.swift
 //  NetworkKit
 //
 //  Created by Raghav Ahuja on 15/10/19.
@@ -19,7 +19,7 @@
  
  In `DEBUG` mode, it persists the `current` value in `UserDefaults`.
  */
-public struct Environment: Hashable, Equatable {
+public struct NKEnvironment: Hashable, Equatable {
     
     /// String value of the environment
     public let value: String
@@ -28,10 +28,10 @@ public struct Environment: Hashable, Equatable {
         self.value = value
     }
     
-    public internal(set) static var current: Environment = .none
+    public internal(set) static var current: NKEnvironment = .none
     
-    public static let none          = Environment(value: "")
-    public static let staging      = Environment(value: "staging")
-    public static let dev           = Environment(value: "dev")
-    public static let production    = Environment(value: "")
+    public static let none          = NKEnvironment(value: "")
+    public static let staging      = NKEnvironment(value: "staging")
+    public static let dev           = NKEnvironment(value: "dev")
+    public static let production    = NKEnvironment(value: "")
 }

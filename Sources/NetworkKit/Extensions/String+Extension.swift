@@ -7,7 +7,7 @@
 
 extension String.StringInterpolation {
     
-    public mutating func appendInterpolation(_ value: Environment) {
+    public mutating func appendInterpolation(_ value: NKEnvironment) {
         appendInterpolation(value.value)
     }
 }

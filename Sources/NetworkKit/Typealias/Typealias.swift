@@ -30,7 +30,6 @@ public typealias Subscriber = PublisherKit.Subscriber
 public typealias Subscription = PublisherKit.Subscription
 public typealias Subscriptions = PublisherKit.Subscriptions
 
-
 public typealias NKAnyDataTask = AnyPublisher<NKDataTask.Output, NKDataTask.Failure>
 public typealias NKAnyDownloadTask = AnyPublisher<NKDownloadTask.Output, NKDownloadTask.Failure>
 public typealias NKAnyUploadTask = AnyPublisher<NKUploadTask.Output, NKUploadTask.Failure>

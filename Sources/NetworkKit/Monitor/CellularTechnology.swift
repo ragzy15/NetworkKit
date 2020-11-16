@@ -7,23 +7,35 @@
 
 #if os(iOS) && !targetEnvironment(macCatalyst)
 import CoreTelephony
+#endif
 
-public struct CellularInfo: Hashable, CustomStringConvertible {
+public struct CellularInfo: Hashable {
     
+    #if os(iOS) && !targetEnvironment(macCatalyst)
     public let carriers: [CTCarrier]
     public let dataProvider: CTCarrier?
-    public let dataTechnology: CellularTechnology
     
+    public let dataTechnology: CellularTechnology
+    #endif
+}
+
+#if os(iOS) && !targetEnvironment(macCatalyst)
+extension CellularInfo: CustomStringConvertible {
     public var description: String {
-        "Carriers: \(carriers)\nTechnology: \(dataTechnology)"
+        return "Carriers: \(carriers)\nTechnology: \(dataTechnology)"
     }
 }
+#endif
 
 public enum CellularTechnology: String, CustomStringConvertible {
     
+    
+    #if (os(iOS) && !targetEnvironment(macCatalyst)) || os(watchOS)
     /// The Long-Term Evolution (LTE) cellular technology.
     case lte = "LTE"
+    #endif
     
+    #if os(iOS) && !targetEnvironment(macCatalyst)
     /// The Enhanced Data rates for GSM Evolution (EDGE) cellular technology.
     case gen2 = "2G"
     
@@ -32,6 +44,7 @@ public enum CellularTechnology: String, CustomStringConvertible {
     
     /// Other newer cellular technology that has not been handled.
     case other = "Other"
+    #endif
     
     /// No cellular connection available.
     case none = "none"
@@ -41,6 +54,7 @@ public enum CellularTechnology: String, CustomStringConvertible {
     }
 }
 
+#if (os(iOS) && !targetEnvironment(macCatalyst))
 // MARK: INTERNET CONNECTION INTERFACE
 enum __CellularTechnology: CustomStringConvertible {
     case cdma

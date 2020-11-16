@@ -74,7 +74,8 @@ final class _SCNetworkMonitor: _NetworkMonitorType {
         
         /// The network is reachable on the associated `NetworkInterface`.
         case reachable(NetworkInterface)
-
+        
+        #if os(iOS) && !targetEnvironment(macCatalyst)
         init(_ flags: SCNetworkReachabilityFlags, cellular: CellularInfo) {
             guard flags.isActuallyReachable else {
                 
@@ -92,6 +93,25 @@ final class _SCNetworkMonitor: _NetworkMonitorType {
 
             self = networkStatus
         }
+        #else
+        init(_ flags: SCNetworkReachabilityFlags) {
+            guard flags.isActuallyReachable else {
+                
+                if flags.isCellular {
+                    self = .notReachable(.other)
+                } else {
+                    self = .notReachable(.wifi)
+                }
+                return
+            }
+
+            var networkStatus: NetworkReachabilityStatus = .reachable(.wifi)
+
+            if flags.isCellular { networkStatus = .reachable(.other) }
+
+            self = networkStatus
+        }
+        #endif
     }
 
     /// Default `NetworkReachabilityManager` for the zero address and a `listenerQueue` of `.main`.
@@ -106,7 +126,13 @@ final class _SCNetworkMonitor: _NetworkMonitorType {
     /// - Note: Using this property to decide whether to make a high or low bandwidth request is not recommended.
     ///         Instead, set the `allowsCellularAccess` on any `URLRequest`s being issued.
     ///
-    var isReachableOnCellular: Bool { status == .reachable(.cellular(cellularInfo)) }
+    var isReachableOnCellular: Bool {
+        #if os(iOS) && !targetEnvironment(macCatalyst)
+        return status == .reachable(.cellular(cellularInfo))
+        #else
+        return status == .reachable(.other)
+        #endif
+    }
 
     /// Whether the network is currently reachable over Ethernet or WiFi interface.
     var isReachableOnEthernetOrWiFi: Bool { status == .reachable(.wifi) }
@@ -120,7 +146,11 @@ final class _SCNetworkMonitor: _NetworkMonitorType {
 
     /// The current network reachability status.
     var status: NetworkReachabilityStatus {
+        #if os(iOS) && !targetEnvironment(macCatalyst)
         return flags.map { NetworkReachabilityStatus($0, cellular: cellularInfo) } ?? .unknown(.other)
+        #else
+        return flags.map { NetworkReachabilityStatus($0) } ?? .unknown(.other)
+        #endif
     }
 
     /// Mutable state storage.
@@ -163,11 +193,15 @@ final class _SCNetworkMonitor: _NetworkMonitorType {
         
         let isExpensive: Bool
         
+        #if os(iOS) && !targetEnvironment(macCatalyst)
         if case .reachable(let interface) = status, case .cellular = interface {
             isExpensive = true
         } else {
-             isExpensive = false
+            isExpensive = false
         }
+        #else
+        isExpensive = false
+        #endif
         
         let interface: NetworkInterface
         
@@ -247,7 +281,11 @@ final class _SCNetworkMonitor: _NetworkMonitorType {
     ///
     /// - Parameter flags: `SCNetworkReachabilityFlags` to use to calculate the status.
     func notifyListener(_ flags: SCNetworkReachabilityFlags) {
+        #if os(iOS) && !targetEnvironment(macCatalyst)
         let newStatus = NetworkReachabilityStatus(flags, cellular: cellularInfo)
+        #else
+        let newStatus = NetworkReachabilityStatus(flags)
+        #endif
 
         $mutableState.write { state in
             guard state.previousStatus != newStatus else { return }
@@ -266,11 +304,15 @@ final class _SCNetworkMonitor: _NetworkMonitorType {
             
             let isExpensive: Bool
             
+            #if os(iOS) && !targetEnvironment(macCatalyst)
             if case .cellular = currentInterface {
                 isExpensive = true
             } else {
                 isExpensive = false
             }
+            #else
+            isExpensive = false
+            #endif
             
             let details = NetworkPath(isExpensive: isExpensive, interfaces: [currentInterface], status: flags.pathStatus)
             

@@ -30,12 +30,12 @@ final public class NKSession: NKConfiguration {
         
         #if DEBUG
         if let environmentValue = UserDefaults.standard.string(forKey: "api_environment") {
-            Environment.current = Environment(value: environmentValue)
+            NKEnvironment.current = NKEnvironment(value: environmentValue)
         } else {
-            Environment.current = .none
+            NKEnvironment.current = .none
         }
         #else
-        Environment.current = .production
+        NKEnvironment.current = .production
         #endif
     }
 }

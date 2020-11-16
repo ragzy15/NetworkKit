@@ -50,7 +50,9 @@ extension NKImageSession {
                 if #available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *) {
                     os_log("❗️%{public}@", log: .imageSession, type: .error, error)
                 } else {
-                    NSLog("❗️%@", error)
+                    if NKImageSession.shared.isLoggingEnabled {
+                        NSLog("❗️%@", error)
+                    }
                 }
                 #endif
                 
@@ -74,7 +76,9 @@ extension NKImageSession {
                 if #available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *) {
                     os_log("❗️%{public}@", log: .imageSession, type: .error, error)
                 } else {
-                    NSLog("❗️%@", error)
+                    if NKImageSession.shared.isLoggingEnabled {
+                        NSLog("❗️%@", error)
+                    }
                 }
                 #endif
                 

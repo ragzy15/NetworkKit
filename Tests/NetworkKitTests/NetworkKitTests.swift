@@ -28,9 +28,9 @@ enum Host: String, HostRepresentable {
     var defaultURLQuery: URLQuery? { nil }
 }
 
-extension Environment {
-    static let production = Environment(value: "")
-}
+//extension Environment {
+//    static let production = Environment(value: "")
+//}
 
 enum MockPoint: ConnectionRepresentable {
     
