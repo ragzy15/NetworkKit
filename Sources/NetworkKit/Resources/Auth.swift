@@ -7,9 +7,22 @@
 
 import Foundation
 
+public struct AuthKeyValue: Identifiable {
+    public let id = UUID()
+    public let key: String
+    public let value: String
+}
+
 public enum AuthType: String, Codable, CaseIterable, Identifiable {
     case header = "Request Header"
     case url = "Request URL"
+//    case urlOrBody = "Request URL / Request Body"
+    
+    public var id: String { rawValue }
+}
+
+public enum OAuthType: String, Codable, CaseIterable, Identifiable {
+    case header = "Request Header"
     case urlOrBody = "Request URL / Request Body"
     
     public var id: String { rawValue }
@@ -29,6 +42,8 @@ public enum OAuthSignatureMethod: String, CaseIterable, Codable, Identifiable {
 
 public protocol RequestAuthType: Codable {
     var auth: Auth { get }
+    var query: [AuthKeyValue] { get }
+    var header: [AuthKeyValue] { get }
 }
 
 public struct InheritFromParent: RequestAuthType {
@@ -40,8 +55,16 @@ public struct InheritFromParent: RequestAuthType {
         self.parentAuth = parentAuth
     }
     
+    public var query: [AuthKeyValue] {
+        parentAuth?.auth.query ?? []
+    }
+    
+    public var header: [AuthKeyValue] {
+        parentAuth?.auth.header ?? []
+    }
+    
     enum CodingKeys: CodingKey {
-//        case parentAuth
+        case parentAuth
     }
 }
 
@@ -50,32 +73,11 @@ public struct NoAuth: RequestAuthType {
     
     public init() { }
     
+    public var query: [AuthKeyValue] { [] }
+    public var header: [AuthKeyValue] { [] }
+    
     enum CodingKeys: CodingKey {
         
-    }
-}
-
-public struct OAuth1_0: RequestAuthType {
-    public let auth: Auth = .oAuth_1_0
-    
-    public var signature: OAuthSignatureMethod
-    public var consumerKey: String
-    public var consumerSecret: String
-    public var accessToken: String
-    public var tokenSecret: String
-    public var addTo: AuthType
-    
-    public init() {
-        signature = .hmacSha1
-        consumerKey = ""
-        consumerSecret = ""
-        accessToken = ""
-        tokenSecret = ""
-        addTo = .header
-    }
-    
-    enum CodingKeys: String, CodingKey {
-        case signature, consumerKey, consumerSecret, accessToken, tokenSecret, addTo
     }
 }
 
@@ -93,6 +95,22 @@ public struct APIKeyAuth: RequestAuthType {
         addTo = .header
     }
     
+    public var query: [AuthKeyValue] {
+        guard addTo == .url else {
+            return []
+        }
+        
+        return [AuthKeyValue(key: key, value: value)]
+    }
+    
+    public var header: [AuthKeyValue] {
+        guard addTo == .header else {
+            return []
+        }
+        
+        return [AuthKeyValue(key: key, value: value)]
+    }
+    
     enum CodingKeys: String, CodingKey {
         case key, value, addTo
     }
@@ -106,6 +124,10 @@ public struct BearerTokenAuth: RequestAuthType {
     public init() {
         token = ""
     }
+    
+    public var query: [AuthKeyValue] { [] }
+    
+    public var header: [AuthKeyValue] { [AuthKeyValue(key: "Authorization", value: "Bearer \(token)")]}
     
     enum CodingKeys: String, CodingKey {
         case token
@@ -126,8 +148,89 @@ public struct BasicAuth: RequestAuthType {
         password = ""
     }
     
+    public var query: [AuthKeyValue] { [] }
+    
+    public var header: [AuthKeyValue] {
+        guard let data = "\(username):\(password)".data(using: .utf8) else {
+            return []
+        }
+        
+        let value = data.base64EncodedString()
+        
+        return [AuthKeyValue(key: "Authorization", value: "Basic \(value)")]
+    }
+    
     enum CodingKeys: String, CodingKey {
         case auth, username, password
+    }
+}
+
+public struct OAuth1_0: RequestAuthType {
+    public let auth: Auth = .oAuth_1_0
+    
+    public var signatureMethod                  : OAuthSignatureMethod
+    public var consumerKey                      : String
+    public var consumerSecret                   : String
+    public var accessToken                      : String
+    public var tokenSecret                      : String
+    public var callbackURL                      : String
+    public var verifier                         : String
+    public var timestamp                        : String
+    public var nonce                            : String
+    public var version                          : String
+    public var realm                            : String
+    public var includeBodyHash                  : Bool
+    public var addEmptyParametersToSignature    : Bool
+    public var encodeParametersInHeader         : Bool
+    public var addTo                            : OAuthType
+    // signature -
+    
+    public var signature: String {
+        "" // oauth_signature
+    }
+    
+    public var bodyHash: String {
+        "" // oauth_body_hash
+    }
+    
+    public init() {
+        signatureMethod = .hmacSha1
+        consumerKey = ""
+        consumerSecret = "" // only for HMAC and plain text
+        accessToken = ""
+        tokenSecret = "" // only for HMAC and plain text
+        callbackURL = ""
+        verifier = ""
+        timestamp = ""
+        nonce = ""
+        version = "1.0"
+        realm = ""
+        includeBodyHash = true // Disabled when you're using callback URL / verifier.
+        addEmptyParametersToSignature = false
+        encodeParametersInHeader = true
+        addTo = .header
+    }
+    
+    public var query: [AuthKeyValue] {
+        guard addTo == .urlOrBody else {
+            return []
+        }
+//        If the request method is POST or PUT, and if the request body type is x-www-form-urlencoded, in body else url
+        
+        return [
+            
+        ]
+    }
+    
+    public var header: [AuthKeyValue] { [] }
+    
+//    OAuth realm="lol%40lo.com",oauth_consumer_key="test",oauth_token="tt",oauth_signature_method="HMAC-SHA1",oauth_timestamp="ss",oauth_nonce="uyuyggyg",oauth_version="1.0ab",oauth_body_hash="2jmj7l5rSw0yVb%2FvlWAYkK%2FYBwk%3D",oauth_callback="https%3A%2F%2Fgoogle.com",oauth_verifier="mkmjmkmk",oauth_signature="%2BRrKK2ZZny2gYpXBnRkEXNXozTA%3D"
+    
+    enum CodingKeys: String, CodingKey, CaseIterable {
+        case signatureMethod = "oauth_signature_method", consumerKey = "oauth_consumer_key", consumerSecret, accessToken = "oauth_token", tokenSecret
+        case callbackURL = "oauth_callback", verifier = "oauth_verifier", timestamp = "oauth_timestamp", nonce = "oauth_nonce", version = "oauth_version", realm = "realm"
+        case includeBodyHash, addEmptyParametersToSignature, encodeParametersInHeader
+        case addTo
     }
 }
 
@@ -142,6 +245,22 @@ public struct OAuth2_0: RequestAuthType {
         accessToken = ""
         headerPrefix = ""
         addTo = .header
+    }
+    
+    public var query: [AuthKeyValue] {
+        guard addTo == .url else {
+            return []
+        }
+        
+        return []
+    }
+    
+    public var header: [AuthKeyValue] {
+        guard addTo == .header else {
+            return []
+        }
+        
+        return []
     }
     
     enum CodingKeys: String, CodingKey {
@@ -160,6 +279,22 @@ public struct AWSSignature: RequestAuthType {
         accessKey = ""
         secretKey = ""
         addTo = .header
+    }
+    
+    public var query: [AuthKeyValue] {
+        guard addTo == .url else {
+            return []
+        }
+        
+        return []
+    }
+    
+    public var header: [AuthKeyValue] {
+        guard addTo == .header else {
+            return []
+        }
+        
+        return []
     }
     
     enum CodingKeys: String, CodingKey {
@@ -191,24 +326,6 @@ public enum Auth: String, CaseIterable, Identifiable, Codable {
         case .awsSignature: return 8
         }
     }
-    
-//    public var model: RequestAuthType {
-//        switch self {
-//        case .inheritFromParent: return InheritFromParent(p)
-//        case .none: return NoAuth()
-//        case .apiKey: return APIKeyAuth()
-//        case .bearerToken: return   BearerTokenAuth()
-//        case .basicAuth: return     BasicAuth(auth: .basicAuth)
-//        case .digestAuth: return    BasicAuth(auth: .digestAuth)
-//        case .oAuth_1_0: return     OAuth1_0()
-//        case .oAuth_2_0: return     OAuth2_0()
-//        case .awsSignature: return  AWSSignature()
-//        }
-//    }
-    
-//    public static var allModels: [RequestAuthType] {
-//        allCases.map { $0.model }
-//    }
 }
 
 public struct RequestAuthenticationModel: Codable {
