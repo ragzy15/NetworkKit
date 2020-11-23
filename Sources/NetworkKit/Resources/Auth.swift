@@ -226,7 +226,7 @@ public struct RequestAuthenticationModel: Codable {
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        authType = try container.decode(Auth.self, forKey: .auth)
+        authType = try container.decode(Auth.self, forKey: .authType)
         
         switch authType {
         case .inheritFromParent:
