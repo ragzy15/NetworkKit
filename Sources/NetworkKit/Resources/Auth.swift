@@ -7,10 +7,80 @@
 
 import Foundation
 
-public struct AuthKeyValue: Identifiable {
-    public let id = UUID()
-    public let key: String
-    public let value: String
+public enum RequestFileType: Hashable {
+    case url(URL)
+    case select
+    
+    public var text: String {
+        switch self {
+        case .url(let url):
+            return url.absoluteString
+        case .select:
+            return ""
+        }
+    }
+}
+
+public struct AuthKeyValue: Identifiable, Hashable {
+    
+    public enum ValueType: String, CaseIterable, Hashable, Identifiable {
+        case text
+        case file
+        
+        public var id: String {
+            rawValue
+        }
+    }
+    
+    public enum Value: Hashable {
+        case text(String)
+        case file(RequestFileType)
+        
+        public var text: String {
+            switch self {
+            case .text(let text):
+                return text
+            case .file(let file):
+                return file.text
+            }
+        }
+        
+        public var valueType: ValueType {
+            switch self {
+            case .text:
+                return .text
+            case .file:
+                return .file
+            }
+        }
+    }
+    
+    public let id: UUID
+    public var key: String
+    public var value: Value
+    public var itemDescription: String
+    public var isEnabled: Bool
+    public var canBeToggled: Bool
+    public var sequence: Int
+    public var isConflict: Bool = false
+    public var canBeOverrided: Bool
+    public var isOverriding: Bool = false
+    
+    public init(id: UUID = UUID(), key: String, value: Value, itemDescription: String = "",
+                isEnabled: Bool = true, canBeToggled: Bool = true, canBeOverrided: Bool = true, sequence: Int) {
+        self.id = id
+        self.key = key
+        self.value = value
+        self.itemDescription = itemDescription
+        self.isEnabled = isEnabled
+        self.canBeToggled = canBeToggled
+        self.canBeOverrided = canBeOverrided
+        self.sequence = sequence
+    }
+    
+    public static func empty(at index: Int) -> AuthKeyValue {
+        AuthKeyValue(key: "", value: .text(""), sequence: index)
+    }
 }
 
 public enum AuthType: String, Codable, CaseIterable, Identifiable {
@@ -100,7 +170,8 @@ public struct APIKeyAuth: RequestAuthType {
             return []
         }
         
-        return [AuthKeyValue(key: key, value: value)]
+        return [AuthKeyValue(key: key, value: .text(value),
+                             canBeToggled: false, canBeOverrided: false, sequence: 0)]
     }
     
     public var header: [AuthKeyValue] {
@@ -108,7 +179,8 @@ public struct APIKeyAuth: RequestAuthType {
             return []
         }
         
-        return [AuthKeyValue(key: key, value: value)]
+        return [AuthKeyValue(key: key, value: .text(value),
+                             canBeToggled: false, canBeOverrided: false, sequence: 0)]
     }
     
     enum CodingKeys: String, CodingKey {
@@ -127,7 +199,10 @@ public struct BearerTokenAuth: RequestAuthType {
     
     public var query: [AuthKeyValue] { [] }
     
-    public var header: [AuthKeyValue] { [AuthKeyValue(key: "Authorization", value: "Bearer \(token)")]}
+    public var header: [AuthKeyValue] {
+        [AuthKeyValue(key: "Authorization", value: .text("Bearer \(token)"),
+                      canBeToggled: false, canBeOverrided: false, sequence: 0)]
+    }
     
     enum CodingKeys: String, CodingKey {
         case token
@@ -157,7 +232,10 @@ public struct BasicAuth: RequestAuthType {
         
         let value = data.base64EncodedString()
         
-        return [AuthKeyValue(key: "Authorization", value: "Basic \(value)")]
+        return [
+            AuthKeyValue(key: "Authorization", value: .text("Basic \(value)"),
+                         canBeToggled: false, canBeOverrided: false, sequence: 0)
+        ]
     }
     
     enum CodingKeys: String, CodingKey {

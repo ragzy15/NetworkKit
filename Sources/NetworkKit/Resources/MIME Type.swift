@@ -9,31 +9,31 @@
 //
 //public enum MIMEType: String {
 //    
-//    case html             = "text/html"
-//    case htm              = "text/html"
-//    case shtml            = "text/html"
-//    case css              = "text/css"
-//    case xml              = "text/xml"
-//    case gif              = "image/gif"
-//    case jpeg             = "image/jpeg"
-//    case jpg              = "image/jpeg"
-//    case js               = "application/javascript"
-//    case atom             = "application/atom+xml"
-//    case rss              = "application/rss+xml"
+//    case html
+//    case htm
+//    case shtml
+//    case css
+//    case xml
+//    case gif
+//    case jpeg
+//    case jpg
+//    case javascript
+//    case atom
+//    case rss
 //    case mml              = "text/mathml"
 //    case txt              = "text/plain"
 //    case jad              = "text/vnd.sun.j2me.app-descriptor"
 //    case wml              = "text/vnd.wap.wml"
 //    case htc              = "text/x-component"
 //    case png              = "image/png"
-//    case tif              = "image/tiff"
-//    case tiff             = "image/tiff"
+//    case tif
+//    case tiff
 //    case wbmp             = "image/vnd.wap.wbmp"
 //    case ico              = "image/x-icon"
 //    case jng              = "image/x-jng"
 //    case bmp              = "image/x-ms-bmp"
-//    case svg              = "image/svg+xml"
-//    case svgz             = "image/svg+xml"
+//    case svg
+//    case svgz
 //    case webp             = "image/webp"
 //    case woff             = "application/font-woff"
 //    case jar              = "application/java-archive"
@@ -108,8 +108,55 @@
 //    case flv              = "video/x-flv"
 //    case m4v              = "video/x-m4v"
 //    case mng              = "video/x-mng"
-//    case asx              = "video/x-ms-asf"
-//    case asf              = "video/x-ms-asf"
-//    case wmv              = "video/x-ms-wmv"
-//    case avi              = "video/x-msvideo"
+//    case asx
+//    case asf
+//    case wmv
+//    case avi
+//    
+//    public static func match(for mimeTypeString: String) -> [MIMEType] {
+//        switch mimeTypeString {
+//        
+//        case "text/html":
+//            return [.htm, .html, .shtml]
+//            
+//        case "text/css":
+//            return [.css]
+//            
+//        case "text/xml", "application/xml":
+//            return [.xml]
+//            
+//        case "image/gif":
+//            return [.gif]
+//            
+//        case "image/jpeg":
+//            return [.jpeg, .jpg]
+//            
+//        case "application/javascript":
+//            return [.javascript]
+//            
+//        case "application/atom+xml":
+//            return [.atom]
+//            
+//        case "application/rss+xml":
+//            return [.rss]
+//            
+//        case "image/tiff":
+//            return [.tif, .tiff]
+//            
+//        case "image/svg+xml":
+//            return [.svg, .svgz]
+//        
+//        case "video/x-ms-asf":
+//            return [.asx, .asf]
+//            
+//        case "video/x-ms-wmv":
+//            return [.wmv]
+//            
+//        case "video/x-msvideo":
+//            return [.avi]
+//            
+//        default:
+//            return [.txt]
+//        }
+//    }
 //}

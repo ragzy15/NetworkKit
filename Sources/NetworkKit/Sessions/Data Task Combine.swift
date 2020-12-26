@@ -122,23 +122,22 @@ extension URLSession.DataTaskCOPublisher {
             
             self.demand += demand
             
-            if let isWaitingForConnectivity = parent.isWaitingForConnectivity {
-                cancellable = parent.session.delegate.taskWaitingForConnectivity
-                    .receive(on: DispatchQueue.global(qos: .utility))
-                    .filter { (taskIdentifiers) in
-                        Swift.print(taskIdentifiers, task.taskIdentifier)
-                        return taskIdentifiers.contains(task.taskIdentifier)
-                    }
-                    .receive(on: DispatchQueue.main)
-                    .sink(receiveValue: { (_) in
-                        isWaitingForConnectivity()
-                        parent.session.delegate.taskWaitingForConnectivity.value.remove(task.taskIdentifier)
-                    })
-            }
+            cancellable = parent.session.delegate.taskWaitingForConnectivity
+                .receive(on: DispatchQueue.global(qos: .utility))
+                .filter { (taskIdentifiers) in
+                    return taskIdentifiers.contains(task.taskIdentifier)
+                }
+                .receive(on: DispatchQueue.main)
+                .sink(receiveValue: { (_) in
+                    parent.isWaitingForConnectivity?()
+                    parent.session.delegate.taskWaitingForConnectivity.value.remove(task.taskIdentifier)
+                })
             
             lock.unlock()
             
-            parent.progressHandler?(task.progress)
+            DispatchQueue.main.async {
+                parent.progressHandler?(task.progress)
+            }
             
             Logger.default.logAPIRequest(request: parent.request, name: parent.name)
             
