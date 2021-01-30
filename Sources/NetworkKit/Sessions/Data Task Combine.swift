@@ -17,7 +17,7 @@ public let NKTaskMetrics = "NKTaskMetrics"
 public let NKTaskResponse = "NKTaskResponse"
 public let NKTaskData = "NKTaskData"
 
-@available(iOS 10.0, *)
+@available(iOS 10.0, macOS 10.15, *)
 public typealias NKTaskOutput = (data: Data, response: URLResponse, metrics: URLSessionTaskMetrics?)
 
 extension URLSession {
@@ -28,7 +28,7 @@ extension URLSession {
     /// - Parameter url: The URL for which to create a data task.
     /// - Parameter name: Name for the task. Used for logging purpose only.
     /// - Returns: A publisher that wraps a data task for the URL.
-    @available(iOS 13.0, *)
+    @available(iOS 13.0, macOS 10.15, *)
     public static func dataTaskCOPublisher(for url: URL, name: String = "", session: NetworkSession) -> DataTaskCOPublisher {
         let request = URLRequest(url: url)
         return DataTaskCOPublisher(name: name, request: request, session: session)
@@ -40,7 +40,7 @@ extension URLSession {
     /// - Parameter request: The URL request for which to create a data task.
     /// - Parameter name: Name for the task. Used for logging purpose only.
     /// - Returns: A publisher that wraps a data task for the URL request.
-    @available(iOS 13.0, *)
+    @available(iOS 13.0, macOS 10.15, *)
     public static func dataTaskCOPublisher(for request: URLRequest, name: String = "", session: NetworkSession) -> DataTaskCOPublisher {
         DataTaskCOPublisher(name: name, request: request, session: session)
     }
@@ -48,7 +48,7 @@ extension URLSession {
 
 extension URLSession {
     
-    @available(iOS 13.0, *)
+    @available(iOS 13.0, macOS 10.15, *)
     public struct DataTaskCOPublisher: Combine.Publisher {
         
         public typealias Output = (data: Data, response: URLResponse, metrics: URLSessionTaskMetrics?)
@@ -84,7 +84,7 @@ extension URLSession {
     }
 }
 
-@available(iOS 13.0, *)
+@available(iOS 13.0, macOS 10.15, *)
 extension URLSession.DataTaskCOPublisher {
     
     // MARK: DATA TASK SINK

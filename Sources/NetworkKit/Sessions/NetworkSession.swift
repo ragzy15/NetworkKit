@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-@available(iOS 13.0, *)
+@available(iOS 13.0, macOS 10.15, *)
 public class NetworkSession: NKConfiguration {
     
     public static let shared = NetworkSession()
@@ -75,7 +75,7 @@ public class NetworkSession: NKConfiguration {
     }
 }
 
-@available(iOS 13.0, *)
+@available(iOS 13.0, macOS 10.15, *)
 class NetworkSessionDelegate: NSObject, URLSessionTaskDelegate {
     
     var taskMetrics: Combine.CurrentValueSubject<[Int: URLSessionTaskMetrics], Never> = .init([:])

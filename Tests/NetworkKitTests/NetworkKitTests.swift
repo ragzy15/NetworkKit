@@ -1,4 +1,5 @@
 import XCTest
+import UniformTypeIdentifiers
 @testable import NetworkKit
 
 enum APIType: String, APIRepresentable {
@@ -127,6 +128,11 @@ final class NetworkKitTests: XCTestCase {
     var cancellable: AnyCancellable?
 
     let expecatation = XCTestExpectation()
+    
+    @available(iOS 14.0, *)
+    func testMime() {
+        print(UTType.html.preferredMIMEType)
+    }
     
     func testExample() {
         cancellable = NKSession.shared.dataTask {

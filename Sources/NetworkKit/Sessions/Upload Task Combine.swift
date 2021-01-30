@@ -17,7 +17,7 @@ extension URLSession {
     /// - Parameter url: The URL for which to create a data task.
     /// - Parameter name: Name for the task. Used for logging purpose only.
     /// - Returns: A publisher that wraps a data task for the URL.
-    @available(iOS 13.0, *)
+    @available(iOS 13.0, macOS 10.15, *)
     public static func uploadTaskCOPublisher(for request: URLRequest, name: String = "", from data: Data?, session: NetworkSession) -> UploadTaskCOPublisher {
         return UploadTaskCOPublisher(name: name, request: request, from: data, session: session)
     }
@@ -28,7 +28,7 @@ extension URLSession {
     /// - Parameter request: The URL request for which to create a data task.
     /// - Parameter name: Name for the task. Used for logging purpose only.
     /// - Returns: A publisher that wraps a data task for the URL request.
-    @available(iOS 13.0, *)
+    @available(iOS 13.0, macOS 10.15, *)
     public static func uploadTaskCOPublisher(for request: URLRequest, name: String = "", from file: URL, session: NetworkSession) -> UploadTaskCOPublisher {
         UploadTaskCOPublisher(name: name, request: request, from: file, session: session)
     }
@@ -36,7 +36,7 @@ extension URLSession {
 
 extension URLSession {
     
-    @available(iOS 13.0, *)
+    @available(iOS 13.0, macOS 10.15, *)
     public struct UploadTaskCOPublisher: Combine.Publisher {
         
         public typealias Output = (data: Data, response: URLResponse, metrics: URLSessionTaskMetrics?)
@@ -86,7 +86,7 @@ extension URLSession {
     }
 }
 
-@available(iOS 13.0, *)
+@available(iOS 13.0, macOS 10.15, *)
 extension URLSession.UploadTaskCOPublisher {
     
     // MARK: DATA TASK SINK

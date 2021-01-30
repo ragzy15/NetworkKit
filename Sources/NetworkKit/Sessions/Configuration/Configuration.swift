@@ -51,7 +51,7 @@ open class NKConfiguration {
         configuration.timeoutIntervalForRequest = TimeInterval(integerLiteral: 20)
         configuration.timeoutIntervalForResource = TimeInterval(integerLiteral: 40)
         
-        if #available(iOS 11.0, *) {
+        if #available(iOS 11.0, macOS 10.13, *) {
             configuration.waitsForConnectivity = true
         }
         

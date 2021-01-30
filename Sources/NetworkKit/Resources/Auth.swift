@@ -30,6 +30,15 @@ public struct AuthKeyValue: Identifiable, Hashable {
         public var id: String {
             rawValue
         }
+        
+        public var value: Value {
+            switch self {
+            case .text:
+                return .text("")
+            case .file:
+                return .file(.select)
+            }
+        }
     }
     
     public enum Value: Hashable {
