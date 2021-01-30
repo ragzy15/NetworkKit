@@ -5,7 +5,10 @@
 //  Created by Raghav Ahuja on 06/11/20.
 //
 
+#if canImport(Combine)
 import Combine
+#endif
+
 import Foundation
 import PublisherKit
 

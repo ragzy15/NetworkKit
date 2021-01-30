@@ -7,7 +7,10 @@
 
 import Foundation
 import PublisherKit
+
+#if canImport(Combine)
 import Combine
+#endif
 
 #if canImport(FoundationNetworking)
 import FoundationNetworking
