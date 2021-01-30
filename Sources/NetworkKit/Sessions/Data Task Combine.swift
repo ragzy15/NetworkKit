@@ -5,12 +5,10 @@
 //  Created by Raghav Ahuja on 04/10/20.
 //
 
-import Foundation
-import PublisherKit
-
 #if canImport(Combine)
 import Combine
-#endif
+import Foundation
+import PublisherKit
 
 #if canImport(FoundationNetworking)
 import FoundationNetworking
@@ -218,3 +216,5 @@ extension URLSession.DataTaskCOPublisher {
         }
     }
 }
+
+#endif

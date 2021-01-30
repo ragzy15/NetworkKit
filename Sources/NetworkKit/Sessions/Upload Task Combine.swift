@@ -7,7 +7,6 @@
 
 #if canImport(Combine)
 import Combine
-#endif
 
 import Foundation
 import PublisherKit
@@ -224,3 +223,5 @@ extension URLSession.UploadTaskCOPublisher {
         }
     }
 }
+
+#endif

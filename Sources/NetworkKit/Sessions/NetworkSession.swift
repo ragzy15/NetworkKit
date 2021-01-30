@@ -5,11 +5,9 @@
 //  Created by Raghav Ahuja on 26/10/20.
 //
 
-import Foundation
-
 #if canImport(Combine)
 import Combine
-#endif
+import Foundation
 
 @available(iOS 13.0, macOS 10.15, *)
 public class NetworkSession: NKConfiguration {
@@ -92,3 +90,5 @@ class NetworkSessionDelegate: NSObject, URLSessionTaskDelegate {
         taskWaitingForConnectivity.value.insert(task.taskIdentifier)
     }
 }
+
+#endif
