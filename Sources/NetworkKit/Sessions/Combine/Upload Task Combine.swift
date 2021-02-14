@@ -1,25 +1,15 @@
 //
-//  Data Task Combine.swift
-//  PublisherKit
+//  Upload Task Combine.swift
+//  NetworkKit
 //
-//  Created by Raghav Ahuja on 04/10/20.
+//  Created by Raghav Ahuja on 06/11/20.
 //
 
 #if canImport(Combine)
 import Combine
+
 import Foundation
 import PublisherKit
-
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
-
-public let NKTaskMetrics = "NKTaskMetrics"
-public let NKTaskResponse = "NKTaskResponse"
-public let NKTaskData = "NKTaskData"
-
-@available(iOS 10.0, macOS 10.15, *)
-public typealias NKTaskOutput = (data: Data, response: URLResponse, metrics: URLSessionTaskMetrics?)
 
 extension URLSession {
     
@@ -29,10 +19,9 @@ extension URLSession {
     /// - Parameter url: The URL for which to create a data task.
     /// - Parameter name: Name for the task. Used for logging purpose only.
     /// - Returns: A publisher that wraps a data task for the URL.
-    @available(iOS 13.0, macOS 10.15, *)
-    public static func dataTaskCOPublisher(for url: URL, name: String = "", session: NetworkSession) -> DataTaskCOPublisher {
-        let request = URLRequest(url: url)
-        return DataTaskCOPublisher(name: name, request: request, session: session)
+    @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+    public static func uploadTaskCOPublisher(for request: URLRequest, name: String = "", from data: Data?, session: NetworkSession) -> UploadTaskCOPublisher {
+        return UploadTaskCOPublisher(name: name, request: request, from: data, session: session)
     }
     
     /// Returns a publisher that wraps a URL session data task for a given URL request.
@@ -41,22 +30,26 @@ extension URLSession {
     /// - Parameter request: The URL request for which to create a data task.
     /// - Parameter name: Name for the task. Used for logging purpose only.
     /// - Returns: A publisher that wraps a data task for the URL request.
-    @available(iOS 13.0, macOS 10.15, *)
-    public static func dataTaskCOPublisher(for request: URLRequest, name: String = "", session: NetworkSession) -> DataTaskCOPublisher {
-        DataTaskCOPublisher(name: name, request: request, session: session)
+    @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+    public static func uploadTaskCOPublisher(for request: URLRequest, name: String = "", from file: URL, session: NetworkSession) -> UploadTaskCOPublisher {
+        UploadTaskCOPublisher(name: name, request: request, from: file, session: session)
     }
 }
 
 extension URLSession {
     
-    @available(iOS 13.0, macOS 10.15, *)
-    public struct DataTaskCOPublisher: Combine.Publisher {
+    @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+    public struct UploadTaskCOPublisher: Combine.Publisher {
         
         public typealias Output = (data: Data, response: URLResponse, metrics: URLSessionTaskMetrics?)
         
         public typealias Failure = Error
         
         public let request: URLRequest
+        
+        public let data: Data?
+        
+        private let fileUrl: URL?
         
         public let session: NetworkSession
         
@@ -65,10 +58,20 @@ extension URLSession {
         var progressHandler: ((Progress) -> Void)?
         var isWaitingForConnectivity: (() -> Void)?
         
-        public init(name: String = "", request: URLRequest, session: NetworkSession) {
+        public init(name: String = "", request: URLRequest, from data: Data?, session: NetworkSession) {
             self.name = name
             self.request = request
             self.session = session
+            self.data = data
+            fileUrl = nil
+        }
+        
+        public init(name: String = "", request: URLRequest, from file: URL, session: NetworkSession) {
+            self.name = name
+            self.request = request
+            self.session = session
+            data = nil
+            fileUrl = file
         }
         
         public func receive<S: Combine.Subscriber>(subscriber: S) where Output == S.Input, Failure == S.Failure {
@@ -85,8 +88,8 @@ extension URLSession {
     }
 }
 
-@available(iOS 13.0, macOS 10.15, *)
-extension URLSession.DataTaskCOPublisher {
+@available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+extension URLSession.UploadTaskCOPublisher {
     
     // MARK: DATA TASK SINK
     private final class Inner<Downstream: Combine.Subscriber>: Combine.Subscription, CustomStringConvertible, CustomPlaygroundDisplayConvertible, CustomReflectable where Output == Downstream.Input, Failure == Downstream.Failure {
@@ -97,11 +100,11 @@ extension URLSession.DataTaskCOPublisher {
         private var downstream: Downstream?
         private var demand: Combine.Subscribers.Demand = .none
         
-        private var parent: URLSession.DataTaskCOPublisher?
+        private var parent: URLSession.UploadTaskCOPublisher?
         
         private var cancellable: Combine.AnyCancellable?
         
-        init(downstream: Downstream, parent: URLSession.DataTaskCOPublisher) {
+        init(downstream: Downstream, parent: URLSession.UploadTaskCOPublisher) {
             self.downstream = downstream
             self.parent = parent
         }
@@ -111,34 +114,38 @@ extension URLSession.DataTaskCOPublisher {
             guard let parent = parent, task == nil else { lock.unlock(); return }
             
             var task: URLSessionDataTask!
-            task = parent.session.session.dataTask(with: parent.request) { [weak self] in
-                guard let `self` = self else {
-                    return
+            
+            if let url = parent.fileUrl {
+                task = parent.session.session.uploadTask(with: parent.request, fromFile: url) { [weak self] in
+                    self?.handleResponse(data: $0, response: $1, error: $2, taskIdentifier: task.taskIdentifier)
                 }
-                
-                self.handleResponse(data: $0, response: $1, error: $2, taskIdentifier: task.taskIdentifier)
+            } else {
+                task = parent.session.session.uploadTask(with: parent.request, from: parent.data) { [weak self] in
+                    self?.handleResponse(data: $0, response: $1, error: $2, taskIdentifier: task.taskIdentifier)
+                }
             }
             
             self.task = task
             
             self.demand += demand
             
-            cancellable = parent.session.delegate.taskWaitingForConnectivity
-                .receive(on: DispatchQueue.global(qos: .utility))
-                .filter { (taskIdentifiers) in
-                    return taskIdentifiers.contains(task.taskIdentifier)
-                }
-                .receive(on: DispatchQueue.main)
-                .sink(receiveValue: { (_) in
-                    parent.isWaitingForConnectivity?()
-                    parent.session.delegate.taskWaitingForConnectivity.value.remove(task.taskIdentifier)
-                })
+            if let isWaitingForConnectivity = parent.isWaitingForConnectivity {
+                cancellable = parent.session.delegate.taskWaitingForConnectivity
+                    .receive(on: DispatchQueue.global(qos: .utility))
+                    .filter { (taskIdentifiers) in
+                        Swift.print(taskIdentifiers, task.taskIdentifier)
+                        return taskIdentifiers.contains(task.taskIdentifier)
+                    }
+                    .receive(on: DispatchQueue.main)
+                    .sink(receiveValue: { (_) in
+                        isWaitingForConnectivity()
+                        parent.session.delegate.taskWaitingForConnectivity.value.remove(task.taskIdentifier)
+                    })
+            }
             
             lock.unlock()
             
-            DispatchQueue.main.async {
-                parent.progressHandler?(task.progress)
-            }
+            parent.progressHandler?(task.progress)
             
             Logger.default.logAPIRequest(request: parent.request, name: parent.name)
             
