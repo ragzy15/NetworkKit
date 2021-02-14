@@ -8,6 +8,23 @@
 #if canImport(Combine)
 import Combine
 
+// MARK: COMPLETION
+@available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+extension Combine.Publisher {
+    
+    /// Attaches a subscriber with closure-based behavior.
+    ///
+    /// This method creates the subscriber and immediately requests an unlimited number of values, prior to returning the subscriber.
+    /// - parameter block: The closure to execute on completion.
+    /// - Returns: A cancellable instance; used when you end assignment of the received value. Deallocation of the result will tear down the subscription stream.
+    @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+    public func completion(_ block: @escaping (Result<Output, Failure>) -> Void) -> Combine.AnyCancellable {
+        let subscriber = Combine.Subscribers.ResultCompletion(receiveCompletion: block)
+        subscribe(subscriber)
+        return Combine.AnyCancellable(subscriber)
+    }
+}
+
 @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
 public extension Combine.Subscribers {
     
