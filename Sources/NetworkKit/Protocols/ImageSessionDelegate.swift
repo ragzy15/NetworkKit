@@ -13,7 +13,7 @@ import FoundationNetworking
 
 import os.log
 
-public protocol NKImageSessionDelegate: class {
+public protocol NKImageSessionDelegate: AnyObject {
     
     typealias ImageType = NKImageSession.ImageType
     

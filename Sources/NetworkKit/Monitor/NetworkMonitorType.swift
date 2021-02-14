@@ -9,7 +9,7 @@
 import CoreTelephony
 #endif
 
-public protocol NetworkMonitorType: class {
+public protocol NetworkMonitorType: AnyObject {
     
     typealias NetworkPathHandler = (NetworkPath) -> Void
     

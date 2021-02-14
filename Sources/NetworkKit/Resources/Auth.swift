@@ -125,12 +125,12 @@ public protocol RequestAuthType: Codable {
     var header: [AuthKeyValue] { get }
 }
 
-public struct InheritFromParent: RequestAuthType {
+public struct InheritFromParent<ParentAuth: RequestAuthType>: RequestAuthType {
     public let auth: Auth = .inheritFromParent
     
-    public var parentAuth: RequestAuthType?
+    public var parentAuth: ParentAuth?
     
-    public init(parentAuth: RequestAuthType?) {
+    public init(parentAuth: ParentAuth?) {
         self.parentAuth = parentAuth
     }
     
@@ -415,68 +415,68 @@ public enum Auth: String, CaseIterable, Identifiable, Codable {
     }
 }
 
-public struct RequestAuthenticationModel: Codable {
-    public var auth: RequestAuthType
-    public var authType: Auth
-    
-    public init(auth: RequestAuthType) {
-        self.auth = auth
-        authType = auth.auth
-    }
-    
-    public enum CodingKeys: String, CodingKey {
-        case auth, authType
-    }
-    
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        authType = try container.decode(Auth.self, forKey: .authType)
-        
-        switch authType {
-        case .inheritFromParent:
-            auth = try container.decode(InheritFromParent.self, forKey: .auth)
-        case .none:
-            auth = try container.decode(NoAuth.self, forKey: .auth)
-        case .apiKey:
-            auth = try container.decode(APIKeyAuth.self, forKey: .auth)
-        case .bearerToken:
-            auth = try container.decode(BearerTokenAuth.self, forKey: .auth)
-        case .basicAuth:
-            auth = try container.decode(BasicAuth.self, forKey: .auth)
-        case .digestAuth:
-            auth = try container.decode(BasicAuth.self, forKey: .auth)
-        case .oAuth_1_0:
-            auth = try container.decode(OAuth1_0.self, forKey: .auth)
-        case .oAuth_2_0:
-            auth = try container.decode(OAuth2_0.self, forKey: .auth)
-        case .awsSignature:
-            auth = try container.decode(AWSSignature.self, forKey: .auth)
-        }
-    }
-    
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(authType, forKey: .authType)
-        
-        switch authType {
-        case .inheritFromParent:
-            try container.encode(auth as! InheritFromParent, forKey: .auth)
-        case .none:
-            try container.encode(auth as! NoAuth, forKey: .auth)
-        case .apiKey:
-            try container.encode(auth as! APIKeyAuth, forKey: .auth)
-        case .bearerToken:
-            try container.encode(auth as! BearerTokenAuth, forKey: .auth)
-        case .basicAuth:
-            try container.encode(auth as! BasicAuth, forKey: .auth)
-        case .digestAuth:
-            try container.encode(auth as! BasicAuth, forKey: .auth)
-        case .oAuth_1_0:
-            try container.encode(auth as! OAuth1_0, forKey: .auth)
-        case .oAuth_2_0:
-            try container.encode(auth as! OAuth2_0, forKey: .auth)
-        case .awsSignature:
-            try container.encode(auth as! AWSSignature, forKey: .auth)
-        }
-    }
-}
+//public struct RequestAuthenticationModel: Codable {
+//    public var auth: RequestAuthType
+//    public var authType: Auth
+//    
+//    public init(auth: RequestAuthType) {
+//        self.auth = auth
+//        authType = auth.auth
+//    }
+//    
+//    public enum CodingKeys: String, CodingKey {
+//        case auth, authType
+//    }
+//    
+//    public init(from decoder: Decoder) throws {
+//        let container = try decoder.container(keyedBy: CodingKeys.self)
+//        authType = try container.decode(Auth.self, forKey: .authType)
+//        
+//        switch authType {
+//        case .inheritFromParent:
+//            auth = try container.decode(InheritFromParent.self, forKey: .auth)
+//        case .none:
+//            auth = try container.decode(NoAuth.self, forKey: .auth)
+//        case .apiKey:
+//            auth = try container.decode(APIKeyAuth.self, forKey: .auth)
+//        case .bearerToken:
+//            auth = try container.decode(BearerTokenAuth.self, forKey: .auth)
+//        case .basicAuth:
+//            auth = try container.decode(BasicAuth.self, forKey: .auth)
+//        case .digestAuth:
+//            auth = try container.decode(BasicAuth.self, forKey: .auth)
+//        case .oAuth_1_0:
+//            auth = try container.decode(OAuth1_0.self, forKey: .auth)
+//        case .oAuth_2_0:
+//            auth = try container.decode(OAuth2_0.self, forKey: .auth)
+//        case .awsSignature:
+//            auth = try container.decode(AWSSignature.self, forKey: .auth)
+//        }
+//    }
+//    
+//    public func encode(to encoder: Encoder) throws {
+//        var container = encoder.container(keyedBy: CodingKeys.self)
+//        try container.encode(authType, forKey: .authType)
+//        
+//        switch authType {
+//        case .inheritFromParent:
+//            try container.encode(auth as! InheritFromParent, forKey: .auth)
+//        case .none:
+//            try container.encode(auth as! NoAuth, forKey: .auth)
+//        case .apiKey:
+//            try container.encode(auth as! APIKeyAuth, forKey: .auth)
+//        case .bearerToken:
+//            try container.encode(auth as! BearerTokenAuth, forKey: .auth)
+//        case .basicAuth:
+//            try container.encode(auth as! BasicAuth, forKey: .auth)
+//        case .digestAuth:
+//            try container.encode(auth as! BasicAuth, forKey: .auth)
+//        case .oAuth_1_0:
+//            try container.encode(auth as! OAuth1_0, forKey: .auth)
+//        case .oAuth_2_0:
+//            try container.encode(auth as! OAuth2_0, forKey: .auth)
+//        case .awsSignature:
+//            try container.encode(auth as! AWSSignature, forKey: .auth)
+//        }
+//    }
+//}

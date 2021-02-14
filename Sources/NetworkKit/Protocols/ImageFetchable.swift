@@ -15,7 +15,7 @@ import PublisherKit
 import os.log
 
 /// Allows Image View to fetch image using `PublisherKit`
-public protocol ImageFetchable: class {
+public protocol ImageFetchable: AnyObject {
     
     typealias ImageType = NKImageSession.ImageType
     
