@@ -128,18 +128,18 @@ public protocol RequestAuthType: Codable {
 public struct InheritFromParent: RequestAuthType {
     public let auth: Auth = .inheritFromParent
     
-    public var parentAuth: RequestAuthenticationModel?
+    public var parentAuth: RequestAuthType?
     
-    public init(parentAuth: RequestAuthenticationModel?) {
+    public init(parentAuth: RequestAuthType?) {
         self.parentAuth = parentAuth
     }
     
     public var query: [AuthKeyValue] {
-        parentAuth?.auth.query ?? []
+        parentAuth?.query ?? []
     }
     
     public var header: [AuthKeyValue] {
-        parentAuth?.auth.header ?? []
+        parentAuth?.header ?? []
     }
     
     enum CodingKeys: CodingKey {
