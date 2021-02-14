@@ -119,18 +119,18 @@ public enum OAuthSignatureMethod: String, CaseIterable, Codable, Identifiable {
     public var id: String { rawValue }
 }
 
-public protocol RequestAuthType: Codable {
+public protocol RequestAuthType {
     var auth: Auth { get }
     var query: [AuthKeyValue] { get }
     var header: [AuthKeyValue] { get }
 }
 
-public struct InheritFromParent<ParentAuth: RequestAuthType>: RequestAuthType {
+public struct InheritFromParent: RequestAuthType {
     public let auth: Auth = .inheritFromParent
     
-    public var parentAuth: ParentAuth?
+    public var parentAuth: RequestAuthType?
     
-    public init(parentAuth: ParentAuth?) {
+    public init(parentAuth: RequestAuthType?) {
         self.parentAuth = parentAuth
     }
     
@@ -147,7 +147,7 @@ public struct InheritFromParent<ParentAuth: RequestAuthType>: RequestAuthType {
     }
 }
 
-public struct NoAuth: RequestAuthType {
+public struct NoAuth: RequestAuthType, Codable {
     public let auth: Auth = .none
     
     public init() { }
@@ -160,7 +160,7 @@ public struct NoAuth: RequestAuthType {
     }
 }
 
-public struct APIKeyAuth: RequestAuthType {
+public struct APIKeyAuth: RequestAuthType, Codable {
     
     public let auth: Auth = .apiKey
     
@@ -197,7 +197,7 @@ public struct APIKeyAuth: RequestAuthType {
     }
 }
 
-public struct BearerTokenAuth: RequestAuthType {
+public struct BearerTokenAuth: RequestAuthType, Codable {
     public let auth: Auth = .bearerToken
     
     public var token: String
@@ -218,7 +218,7 @@ public struct BearerTokenAuth: RequestAuthType {
     }
 }
 
-public struct BasicAuth: RequestAuthType {
+public struct BasicAuth: RequestAuthType, Codable {
     public let auth: Auth
     
     public var username: String
@@ -252,7 +252,7 @@ public struct BasicAuth: RequestAuthType {
     }
 }
 
-public struct OAuth1_0: RequestAuthType {
+public struct OAuth1_0: RequestAuthType, Codable {
     public let auth: Auth = .oAuth_1_0
     
     public var signatureMethod                  : OAuthSignatureMethod
@@ -321,7 +321,7 @@ public struct OAuth1_0: RequestAuthType {
     }
 }
 
-public struct OAuth2_0: RequestAuthType {
+public struct OAuth2_0: RequestAuthType, Codable {
     public let auth: Auth = .oAuth_2_0
     
     public var accessToken: String
@@ -355,7 +355,7 @@ public struct OAuth2_0: RequestAuthType {
     }
 }
 
-public struct AWSSignature: RequestAuthType {
+public struct AWSSignature: RequestAuthType, Codable {
     public let auth: Auth = .awsSignature
     
     public var accessKey: String
