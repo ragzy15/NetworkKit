@@ -129,9 +129,11 @@ public struct InheritFromParent: RequestAuthType {
     public let auth: Auth = .inheritFromParent
     
     public var parentAuth: RequestAuthType?
+    public var parentName: String?
     
-    public init(parentAuth: RequestAuthType?) {
+    public init(parentAuth: RequestAuthType?, parentName: String?) {
         self.parentAuth = parentAuth
+        self.parentName = parentName
     }
     
     public var query: [AuthKeyValue] {
