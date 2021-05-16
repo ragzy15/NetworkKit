@@ -123,16 +123,14 @@ extension URLSession.DataTaskCOPublisher {
             
             self.demand += demand
             
-            cancellable = parent.session.delegate.taskWaitingForConnectivity
-                .receive(on: DispatchQueue.global(qos: .utility))
-                .filter { (taskIdentifiers) in
-                    return taskIdentifiers.contains(task.taskIdentifier)
+            cancellable = NotificationCenter.default.publisher(for: Notification.Name("taskIsWaitingForConnectivity"))
+                .compactMap { $0.userInfo }
+                .filter { (userInfo) in
+                    (userInfo["taskIdentifier"] as! Int) == task.taskIdentifier
                 }
-                .receive(on: DispatchQueue.main)
-                .sink(receiveValue: { (_) in
+                .sink { (_) in
                     parent.isWaitingForConnectivity?()
-                    parent.session.delegate.taskWaitingForConnectivity.value.remove(task.taskIdentifier)
-                })
+                }
             
             lock.unlock()
             

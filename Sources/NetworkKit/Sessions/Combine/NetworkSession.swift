@@ -77,7 +77,7 @@ public class NetworkSession: NKConfiguration {
 }
 
 @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
-class NetworkSessionDelegate: NSObject, URLSessionTaskDelegate {
+final class NetworkSessionDelegate: NSObject, URLSessionWebSocketDelegate {
     
     var taskMetrics: Combine.CurrentValueSubject<[Int: URLSessionTaskMetrics], Never> = .init([:])
     var taskWaitingForConnectivity: Combine.CurrentValueSubject<Set<Int>, Never> = .init(.init())
@@ -88,6 +88,15 @@ class NetworkSessionDelegate: NSObject, URLSessionTaskDelegate {
     
     func urlSession(_ session: URLSession, taskIsWaitingForConnectivity task: URLSessionTask) {
         taskWaitingForConnectivity.value.insert(task.taskIdentifier)
+        NotificationCenter.default.post(name: NSNotification.Name("taskIsWaitingForConnectivity"), object: nil, userInfo: ["taskIdentifier": task.taskIdentifier])
+    }
+    
+    func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
+        NotificationCenter.default.post(name: NSNotification.Name("webSocketDidOpen"), object: nil, userInfo: ["protocol": `protocol` as Any, "taskIdentifier": webSocketTask.taskIdentifier])
+    }
+    
+    func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
+        NotificationCenter.default.post(name: NSNotification.Name("webSocketDidClose"), object: nil, userInfo: ["closeCode": closeCode, "reason": reason as Any, "taskIdentifier": webSocketTask.taskIdentifier])
     }
 }
 
