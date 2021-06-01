@@ -64,6 +64,7 @@ extension URLSession {
         
         var progressHandler: ((Progress) -> Void)?
         var isWaitingForConnectivity: (() -> Void)?
+        var isStarting: (() -> Void)?
         
         public init(name: String = "", request: URLRequest, session: NetworkSession) {
             self.name = name
@@ -136,6 +137,7 @@ extension URLSession.DataTaskCOPublisher {
             
             DispatchQueue.main.async {
                 parent.progressHandler?(task.progress)
+                parent.isStarting?()
             }
             
             Logger.default.logAPIRequest(request: parent.request, name: parent.name)
