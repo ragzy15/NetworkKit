@@ -86,6 +86,10 @@ extension URLSession {
         mutating public func progress(_ progressHandler: @escaping (Progress) -> Void) {
             self.progressHandler = progressHandler
         }
+        
+        mutating public func onStart(_ onStartHandler: @escaping () -> Void) {
+            self.isStarting = onStartHandler
+        }
     }
 }
 
